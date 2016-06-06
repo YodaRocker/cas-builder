@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -26,36 +27,42 @@ namespace casbuilder
                     return;
                 }
 
-                var systemBytes = File.ReadAllBytes(args[0]);
+                var inputFilename = args[0];
+
+                var loadAddress = 0x7f00;
+                var executeAddress = 0x7f00;
+
+                var nameParts = Path.GetFileNameWithoutExtension(inputFilename).Split('@','!');
+                if (nameParts.Length == 3)
+                {
+                    loadAddress = int.Parse(nameParts[1], NumberStyles.HexNumber);
+                    executeAddress = int.Parse(nameParts[2], NumberStyles.HexNumber);
+
+                    Log(oldConsoleColour,
+                        $"Load: ${loadAddress:X}\nExec: ${executeAddress:X}");
+                }
+                else
+                {
+                    Log(ConsoleColor.DarkYellow,
+                        $"Warning: Using default load (${loadAddress:X}) & exec (${executeAddress:X}) addresses ");
+                }
+
+                var systemBytes = File.ReadAllBytes(inputFilename);
 
                 var remainingLength = systemBytes.Length;
                 var blocks = (remainingLength + 255)/256;
 
-                Log(ConsoleColor.Green, $"blocks: {blocks}");
+                Log(oldConsoleColour, $"blocks: {blocks}");
 
                 var casFile = new List<byte>();
 
-                // !! fixme
-                var loadAddress = 0x7f00;
-                var executeAddress = 0x7f00;
-
                 casFile.AddRange(Enumerable.Repeat<byte>(0, 256));
+
                 casFile.Add(0xa5);
                 casFile.Add(0x55);
 
-                var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(args[0]);
-                if (fileNameWithoutExtension != null)
-                {
-                    var filename =
-                        fileNameWithoutExtension.Substring(0, Math.Min(6, fileNameWithoutExtension.Length))
-                            .PadRight(6)
-                            .ToUpperInvariant();
-                    casFile.AddRange(Encoding.ASCII.GetBytes(filename));
-                }
-                else
-                {
-                    casFile.AddRange(Encoding.ASCII.GetBytes("UNKNWN"));
-                }
+                var filename = nameParts[0].Substring(0, Math.Min(6, nameParts[0].Length)).PadRight(6).ToUpperInvariant();
+                casFile.AddRange(Encoding.ASCII.GetBytes(filename));
 
                 for (var i = 0; i < blocks; ++i)
                 {
@@ -79,7 +86,7 @@ namespace casbuilder
                 casFile.Add((byte) (executeAddress & 255));
                 casFile.Add((byte) (executeAddress/256));
 
-                File.WriteAllBytes(Path.ChangeExtension(args[0], ".cas"), casFile.ToArray());
+                File.WriteAllBytes(Path.ChangeExtension(nameParts[0], ".cas"), casFile.ToArray());
 
                 Log(ConsoleColor.Green, "All good.");
             }
