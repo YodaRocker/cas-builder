@@ -1,3 +1,9 @@
-brass test.asm -o test@7e00!7e01.bin
-..\casbuilder\bin\release\casbuilder.exe test@7e00!7e01.bin
+set inname=test2
+set outname=test@7d00!7d00.bin
+
+set inc=%~dp0
+
+brass %INNAME%.asm -o %OUTNAME%
+
+casbuilder.exe %OUTNAME%
 pause

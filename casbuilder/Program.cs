@@ -56,7 +56,7 @@ namespace casbuilder
 
                 var casFile = new List<byte>();
 
-                casFile.AddRange(Enumerable.Repeat<byte>(0, 256));
+                casFile.AddRange(Enumerable.Repeat<byte>(0, 64));
 
                 casFile.Add(0xa5);
                 casFile.Add(0x55);
