@@ -59,12 +59,13 @@ nextEntry:
 	xor		a
 	ld		(lineCount),a
 
-	; erase the 'any key' message
+	; erase the 'press a key' message (11 chars)
 
 	call	str
-	.db		8,8,8,8,8,8,8,8,8,8,8
-	.db		"           "
-	.db		8,8,8,8,8,8,8,8,8,8,8,0
+	.fill	11,8
+	.fill	11,' '
+	.fill	11,8
+	.db		0
 
 theresSpace:
 	call	printEntry
