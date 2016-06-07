@@ -24,6 +24,8 @@ start:
 	pop		af
 	cp		'1'
 	jp		z,cmdbittest
+	cp		'2'
+	jp		z,statbittest
 
 	in		a,($76)
 	call	numOut
@@ -90,19 +92,45 @@ theresSpace:
 	;
 	;
 	;
-	
+
 cmdbittest:
 	ld		b,128
 	ld		a,CMD_DIR_READ_BEGIN
 	out		(IOP_WRITECMD),a
 	
 cbt_loop:
-	in		a,(IOP_STATUS)             ; wait for interface to become ... not busy
+	in		a,(IOP_STATUS)
 	and		4
 	add		a,'0'
 	call	CHAROUT
 	djnz	cbt_loop
 	jp		start
+
+	;
+	;
+	
+statbittest:
+	ld		b,4
+	push	bc
+
+sbt_loopouter:
+	ld		b,128
+	out		(IOP_WRITEDAT),a
+
+sbt_loopinner:
+	in		a,(IOP_STATUS)
+	and		7
+	add		a,'0'
+	call	CHAROUT
+	djnz	sbt_loopinner
+
+	pop		bc
+	djnz	sbt_loopouter
+
+	jp		start
+
+	;
+	;
 	
 numOut:
 	push	af
@@ -133,6 +161,7 @@ numOut:
 	ret
 
 
+	
 ; print an inline zero terminated string
 	
 str:
