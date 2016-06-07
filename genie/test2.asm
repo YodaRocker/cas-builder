@@ -2,6 +2,7 @@
 #include "[%INC%]/commandIDs.h"
 
 CHAROUT .equ    $033a
+STRZOUT	.equ	$28a7
 RET2BAS	.equ	$06cc
 WAITKEY	.equ	$0049
 
@@ -10,9 +11,22 @@ WAITKEY	.equ	$0049
 
 	.org	$7d00	; 32000
 
-	
+start:
 	ld		a,2
-	ld		(lineCount),a
+	ld		(lineCount),a	; lines on the screen, 2 because of dir root printing
+
+	ld		a,'?'
+	call	CHAROUT
+	call	WAITKEY
+	push	af
+	call	CHAROUT
+	call	newline
+	pop		af
+	cp		'1'
+	jp		z,cmdbittest
+
+	in		a,($76)
+	call	numOut
 
 	ld		a,CMD_BUFFER_PTR_RESET
 	call	sdSendCommand
@@ -30,8 +44,8 @@ WAITKEY	.equ	$0049
 	in		a,(IOP_READ)					; sink the confusing drive spec '0:'
 	in		a,(IOP_READ)
 
-	call	str
-	.db		"DIR OF: ", 0
+;	call	str
+;	.db		"DIR OF: ", 0
 
 	call	printEntry
 	call	newline
@@ -73,6 +87,51 @@ theresSpace:
 	inc		(hl)
 	jr		nextEntry
 
+	;
+	;
+	;
+	
+cmdbittest:
+	ld		b,128
+	ld		a,CMD_DIR_READ_BEGIN
+	out		(IOP_WRITECMD),a
+	
+cbt_loop:
+	in		a,(IOP_STATUS)             ; wait for interface to become ... not busy
+	and		4
+	add		a,'0'
+	call	CHAROUT
+	djnz	cbt_loop
+	jp		start
+	
+numOut:
+	push	af
+	push	hl
+	push	bc
+	push	de
+	
+	ld		e,a
+	ld		d,0
+	ld		c,d
+	ld		b,d
+	call	$09b4		; BCDE to ACC
+
+	ld		a,2
+	ld		($40af),a		; acc contains number type
+	
+	call	$0ab1
+	call	$0fbd		; acc to string
+	call	STRZOUT		; print zero terminated string at hl - in this case, the number
+
+	ld		a,' '
+	call	CHAROUT
+
+	pop		de
+	pop		bc
+	pop		hl
+	pop		af
+	ret
+
 
 ; print an inline zero terminated string
 	
@@ -98,38 +157,63 @@ str_2:
 ; else A contains result code
 ;
 sdSendCommand:
-   out   (IOP_WRITECMD),a           ; send command
+	push	af
+	push	af
+	ld		a,'C'
+	call	CHAROUT
+	pop		af
+	call	numOut
+	pop		af
+	out		(IOP_WRITECMD),a           ; send command
 
 _busy:
-   in    a,(IOP_STATUS)             ; wait for interface to become ... not busy
-   and   $4
-   jr    nz,_busy
+	in		a,(IOP_STATUS)             ; wait for interface to become ... not busy
+	and		$4
+	push	af
+	add		a,'0'
+	call	CHAROUT
+	pop		af
+	jr		nz,_busy
 
-   in    a,(IOP_READ)               ; read command status
-   and   a                          ; clear carry, set flags for immediate test on return
-   ret
+	in		a,(IOP_READ)               ; read command status
+	push	af
+	push	af
+	ld		a,'R'
+	call	CHAROUT
+	pop		af
+	call	numOut
+	call	newline
+	pop		af
+	and		a                          ; clear carry, set flags for immediate test on return
+	ret
 
 
 ; ensure we return to 0
 ;
 handleError:
-	and		a								; no error, return to caller
-	jp		nz,RET2BAS
-	ret
+	and		a
+	ret		z
+
+	and		$3f
+	ret		z
+
+	call	numOut
+	call	newline
+	jp		RET2BAS				; return if error or done
 
 
 ; pull an ASCIIZ directory entry from the einSDein
 ;	
 printEntry:
-	in		a,(IOP_READ)					; collect the next character
-	and		a
-	jp		z,newline						; OK/ok - return
+	ld		bc,$2072				; grab $20 characters from input port $72
+	ld		hl,buffer
+	inir
 
-	call	CHAROUT
-	jr		printEntry
+	ld		hl,buffer
+	call	STRZOUT
 
+	; falls through to newline
 
-; jus' print a newline
 newline:
 	ld		a,$d
 	jp		CHAROUT
@@ -138,5 +222,6 @@ newline:
 lineCount:
 	.byte		2							; accounts for the 'directory of ..' lines
 
+buffer:
 
 	.end
