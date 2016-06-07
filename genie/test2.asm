@@ -99,8 +99,10 @@ theresSpace:
 	;
 
 dispStat:
-	call	space
 	in		a,(IOP_STATUS)
+	push	af
+	call	space
+	pop		af
 	and		7
 	add		a,'0'
 	jp		CHAROUT
@@ -127,7 +129,7 @@ write:
 command:
 	call 	dispStat
 	ld		hl,_n
-	ld		a,CMD_DIR_READ_BEGIN
+	ld		a,254 ; show bp
 	out		(IOP_WRITECMD),a
 
 	; falls through
@@ -172,7 +174,6 @@ numOut:
 	ld		a,2
 	ld		($40af),a		; acc contains number type
 	
-;	call	$0ab1
 	call	$0fbd		; acc to string
 	call	STRZOUT		; print zero terminated string at hl - in this case, the number
 
