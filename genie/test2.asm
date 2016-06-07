@@ -11,6 +11,7 @@ WAITKEY	.equ	$0049
 
 	.org	$7d00	; 32000
 
+
 start:
 	ld		a,2
 	ld		(lineCount),a	; lines on the screen, 2 because of dir root printing
@@ -20,15 +21,19 @@ start:
 	call	WAITKEY
 	push	af
 	call	CHAROUT
-	call	newline
 	pop		af
-	cp		'1'
-	jp		z,cmdbittest
-	cp		'2'
-	jp		z,statbittest
+	cp		'R'
+	jp		z,read
+	cp		'W'
+	jp		z,write
+	cp		'S'
+	jp		z,status
+	cp		'C'
+	jp		z,command
 
 	in		a,($76)
 	call	numOut
+	call	newline
 
 	ld		a,CMD_BUFFER_PTR_RESET
 	call	sdSendCommand
@@ -46,8 +51,8 @@ start:
 	in		a,(IOP_READ)					; sink the confusing drive spec '0:'
 	in		a,(IOP_READ)
 
-;	call	str
-;	.db		"DIR OF: ", 0
+	call	str
+	.db		"DIR OF: ", 0
 
 	call	printEntry
 	call	newline
@@ -93,6 +98,47 @@ theresSpace:
 	;
 	;
 
+dispStat:
+	call	space
+	in		a,(IOP_STATUS)
+	and		7
+	add		a,'0'
+	jp		CHAROUT
+
+_n:
+	.byte	1
+	
+read:
+	call 	dispStat
+	in		a,(IOP_READ)
+	call	numOut
+	jp		status
+
+write:
+	call 	dispStat
+	ld		hl,_n
+	ld		a,(hl)
+	inc		(hl)
+	out		(IOP_WRITEDAT),a
+	call	numOut
+	jp		status
+
+
+command:
+	call 	dispStat
+	ld		hl,_n
+	ld		a,CMD_DIR_READ_BEGIN
+	out		(IOP_WRITECMD),a
+
+	; falls through
+
+status:
+	call	dispStat
+	call	newline
+	jp		start
+
+	
+	
 cmdbittest:
 	ld		b,128
 	ld		a,CMD_DIR_READ_BEGIN
@@ -108,27 +154,6 @@ cbt_loop:
 
 	;
 	;
-	
-statbittest:
-	ld		b,4
-	push	bc
-
-sbt_loopouter:
-	ld		b,128
-	out		(IOP_WRITEDAT),a
-
-sbt_loopinner:
-	in		a,(IOP_STATUS)
-	and		7
-	add		a,'0'
-	call	CHAROUT
-	djnz	sbt_loopinner
-
-	pop		bc
-	djnz	sbt_loopouter
-
-	jp		start
-
 	;
 	;
 	
@@ -147,12 +172,9 @@ numOut:
 	ld		a,2
 	ld		($40af),a		; acc contains number type
 	
-	call	$0ab1
+;	call	$0ab1
 	call	$0fbd		; acc to string
 	call	STRZOUT		; print zero terminated string at hl - in this case, the number
-
-	ld		a,' '
-	call	CHAROUT
 
 	pop		de
 	pop		bc
@@ -162,57 +184,36 @@ numOut:
 
 
 	
-; print an inline zero terminated string
-	
+; print an inline zero terminated string.
+
 str:
     pop     hl
 
-str_1:
+str_loop:
     ld      a,(hl)
 	inc		hl
 	or      a
-    jr		nz,str_2
+    jr		nz,str_printit
 
 	push	hl
 	ret
 
-str_2:	
+str_printit:	
     call	charout
-	jr		str_1
+	jr		str_loop
 
 
-; send a command in A
-; returns with C set if failed
-; else A contains result code
+; send a command in A, return with Z set = success, else error in A
 ;
 sdSendCommand:
-	push	af
-	push	af
-	ld		a,'C'
-	call	CHAROUT
-	pop		af
-	call	numOut
-	pop		af
 	out		(IOP_WRITECMD),a           ; send command
 
 _busy:
 	in		a,(IOP_STATUS)             ; wait for interface to become ... not busy
 	and		$4
-	push	af
-	add		a,'0'
-	call	CHAROUT
-	pop		af
 	jr		nz,_busy
 
 	in		a,(IOP_READ)               ; read command status
-	push	af
-	push	af
-	ld		a,'R'
-	call	CHAROUT
-	pop		af
-	call	numOut
-	call	newline
-	pop		af
 	and		a                          ; clear carry, set flags for immediate test on return
 	ret
 
@@ -246,6 +247,11 @@ printEntry:
 newline:
 	ld		a,$d
 	jp		CHAROUT
+
+space:
+	ld		a,' '
+	jp		CHAROUT
+
 
 
 lineCount:
