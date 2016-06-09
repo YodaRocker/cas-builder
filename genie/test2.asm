@@ -6,18 +6,23 @@ STRZOUT	.equ	$28a7
 RET2BAS	.equ	$06cc
 WAITKEY	.equ	$0049
 
-#define DB(x) push af \ ld a,x \ call CHAROUT \ pop af
-
+#define DBp(x) push af \ ld a,x \ call CHAROUT \ pop af
+#define DB(x) ld a,x \ call CHAROUT
 
 	.org	$7d00	; 32000
 
+	DB('>')
+	in		a,(IOP_DETECT)
+	call	numOut
+	call	newline
+
+	DB('V')
+	in		a,(IOP_VERSION)
+	call	numOut
+	call	newline
 
 start:
-	ld		a,2
-	ld		(lineCount),a	; lines on the screen, 2 because of dir root printing
-
-	ld		a,'?'
-	call	CHAROUT
+	DB('?')
 	call	WAITKEY
 	push	af
 	call	CHAROUT
@@ -30,10 +35,11 @@ start:
 	jp		z,status
 	cp		'C'
 	jp		z,command
-
-	in		a,($76)
-	call	numOut
-	call	newline
+	cp		'D'
+	jr		nz,start
+	
+	ld		a,2
+	ld		(lineCount),a	; lines on the screen, 2 because of dir root printing
 
 	ld		a,CMD_BUFFER_PTR_RESET
 	call	sdSendCommand
