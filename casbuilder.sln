@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "casbuilder", "casbuilder\casbuilder.csproj", "{F4923E02-9D41-43BD-B012-FF64632239DB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "cas2gne", "CAS2GNE\cas2gne.csproj", "{09258EE9-E244-4040-80B5-C09B50146CAA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{F4923E02-9D41-43BD-B012-FF64632239DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4923E02-9D41-43BD-B012-FF64632239DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F4923E02-9D41-43BD-B012-FF64632239DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{09258EE9-E244-4040-80B5-C09B50146CAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{09258EE9-E244-4040-80B5-C09B50146CAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{09258EE9-E244-4040-80B5-C09B50146CAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{09258EE9-E244-4040-80B5-C09B50146CAA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

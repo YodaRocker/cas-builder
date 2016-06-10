@@ -4,6 +4,7 @@
 *.bin
 *.cas
 *.html
+*.gne
 
 # User-specific files
 *.suo
