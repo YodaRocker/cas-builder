@@ -1,10 +1,10 @@
-set inname=test2
-set outname=test.bin
+set inname=sdd
+set outname=sdd.bin
 
 set inc=%~dp0
 
-brass %INNAME%.asm -o %OUTNAME%
+brass %INNAME%.asm -o %OUTNAME% -l %INNAME%.html
 
-casbuilder.exe %OUTNAME% /out=test.cas /load=7d00
+casbuilder.exe %OUTNAME% /out=sdd.cas /load=7e80
 
 pause
