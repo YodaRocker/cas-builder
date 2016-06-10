@@ -6,6 +6,7 @@ STRZOUT		.equ $28a7
 RET2BAS		.equ $06cc
 WAITKEY		.equ $0049
 INPSTR      .equ $0361
+GOSYS		.equ $02b5
 
 	.org	$4400
 
@@ -24,6 +25,7 @@ INPSTR      .equ $0361
 	; opens .GNE file, leaves 3 words in xfer buffer: LOAD, LEN and EXEC
     ld      a,CMD_FILE_OPEN_READ
     call    sdSendCommand
+	jp		nz,GOSYS
 
     ld      hl,_buffer
     ld      bc,$0600+IOP_READ
@@ -37,6 +39,7 @@ INPSTR      .equ $0361
 loadWhole:
 	ld		a,CMD_FILE_READ_256
 	call	sdSendCommand
+	jp		nz,GOSYS
 
     inir
     dec     (ix+1)
@@ -75,25 +78,6 @@ _busy:
 	in		a,(IOP_READ)               ; read command status
 	and		a                          ; clear carry, set flags for immediate test on return
 	ret
-
-
-; returns if a = 0 (no error) else return to BASIC. print error number if a != 0x40 (done)
-;
-handleError:
-	and		a
-	ret		z
-	cp		$40
-	jr		z,he_done
-
-	ld      hl,errorString
-	call	STRZOUT		; print zero terminated string at hl - in this case, the number
-
-he_done:	
-	jp		RET2BAS				; return if error or done
-
-
-errorString:
-	.byte	"ERROR",$d,$0
 
 _buffer:
 _loadAddress	.equ _buffer

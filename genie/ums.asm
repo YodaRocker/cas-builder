@@ -8,7 +8,7 @@ WAITKEY		.equ $0049
 INPSTR      .equ $0361
 GOSYS		.equ $02b5
 
-	.org	$7f80
+	.org	$3c40
 
     ld      a,CMD_BUFFER_PTR_RESET
 	out		(IOP_WRITECMD),a
@@ -25,7 +25,7 @@ GOSYS		.equ $02b5
 	; opens .GNE file, leaves 3 words in xfer buffer: LOAD, LEN and EXEC
     ld      a,CMD_FILE_OPEN_READ
     call    sdSendCommand
-    jp      nz,GOSYS
+	jp		nz,GOSYS
 
     ld      hl,_buffer
     ld      bc,$0600+IOP_READ
@@ -39,7 +39,7 @@ GOSYS		.equ $02b5
 loadWhole:
 	ld		a,CMD_FILE_READ_256
 	call	sdSendCommand
-    jp      nz,GOSYS
+	jp		nz,GOSYS
 
     inir
     dec     (ix+1)
@@ -78,8 +78,6 @@ _busy:
 	in		a,(IOP_READ)               ; read command status
 	and		a                          ; clear carry, set flags for immediate test on return
 	ret
-
-	
 
 _buffer:
 _loadAddress	.equ _buffer
