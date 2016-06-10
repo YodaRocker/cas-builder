@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.Linq;
 // ReSharper disable StringIndexOfIsCultureSpecific.1
 
-namespace casbuilder
+namespace argparser
 {
     public static class ArgParser
     {

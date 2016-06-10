@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using casbuilder;
+using argparser;
 
-namespace CAS2GNE
+namespace cas2gne
 {
     public static class Program
     {
@@ -44,7 +41,6 @@ namespace CAS2GNE
                 ArgParser.CheckArg(args, "out", ref outputFilename);
                 Log($"output: '{outputFilename}'");
 
-                var canonical = Path.GetFullPath(inputFilename);
                 var casBytes = File.ReadAllBytes(inputFilename);
 
                 // discard header
