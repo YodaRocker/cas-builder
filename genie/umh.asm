@@ -6,8 +6,9 @@ STRZOUT		.equ $28a7
 RET2BAS		.equ $06cc
 WAITKEY		.equ $0049
 INPSTR      .equ $0361
+GOSYS		.equ $02b5
 
-	.org	$4400
+	.org	$7f80
 
     ld      a,CMD_BUFFER_PTR_RESET
 	out		(IOP_WRITECMD),a
@@ -82,18 +83,7 @@ _busy:
 handleError:
 	and		a
 	ret		z
-	cp		$40
-	jr		z,he_done
-
-	ld      hl,errorString
-	call	STRZOUT		; print zero terminated string at hl - in this case, the number
-
-he_done:	
-	jp		RET2BAS				; return if error or done
-
-
-errorString:
-	.byte	"ERROR",$d,$0
+	jp		GOSYS
 
 _buffer:
 _loadAddress	.equ _buffer

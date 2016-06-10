@@ -51,6 +51,7 @@ namespace cas2gne
                 if (blockLen == 0) blockLen = 256;
 
                 var totalLength = blockLen;
+                var loadAddress = casBytes[idx + 1] + 256 * casBytes[idx + 2];
 
                 // GNE file initialised with dummy values for len & exec, load should be good ;)
                 var gneFile = new List<byte>
@@ -83,6 +84,8 @@ namespace cas2gne
                 gneFile[5] = casBytes[idx + 2];
 
                 File.WriteAllBytes(outputFilename, gneFile.ToArray());
+
+                Log($"memory range: ${loadAddress:X} .. ${loadAddress + totalLength:X}");
 
                 Log(ConsoleColor.Green, "All good.");
             }
