@@ -12,23 +12,24 @@ INPSTR      .equ $0361
     ld      a,CMD_BUFFER_PTR_RESET
 	out		(IOP_WRITECMD),a
 
-    ; input filename string to _buffer. assume < 32 chars, incl. terminator. [L/D][ ][PATH][\0]
+    ; input filename string. assume < 32 chars, incl. terminator. [PATH][\0]
     ld      hl,_buffer
     call    INPSTR
 
+	; find first non-space character then upload to interface as filename
 	rst		10h
 	ld		bc,$2000+IOP_WRITEDAT
 	otir
 
-    ld      a,CMD_FILE_OPEN_READ_GENIE
+	; opens .GNE file, leaves 3 words in xfer buffer: LOAD, LEN and EXEC
+    ld      a,CMD_FILE_OPEN_READ
     call    sdSendCommand
 
-    ; read loadAddr, length, exec address
     ld      hl,_buffer
     ld      bc,$0600+IOP_READ
     inir
 
-    ld      b,0
+    ld      b,0							; 256 byte xfers
     ld      hl,(_loadAddress)
     ld      ix,_loadLength
     jr      wholeBlocksDoneTest
@@ -38,14 +39,14 @@ loadWhole:
 	call	sdSendCommand
 
     inir
-    dec     (ix)
+    dec     (ix+1)
 
 wholeBlocksDoneTest:
-	ld		a,(ix)
+	ld		a,(ix+1)
     and     a
     jr      nz,loadWhole
 
-    ld      a,(_loadLength+1)
+    ld      a,(ix)
     and     a
     jr      z,executeIt
 
@@ -84,16 +85,15 @@ handleError:
 	cp		$40
 	jr		z,he_done
 
-	push	af
-	call	str
-	.byte	"ERROR ",0
-	pop		af
-	call	numOut
-	call	newline
+	ld      hl,errorString
+	call	STRZOUT		; print zero terminated string at hl - in this case, the number
 
 he_done:	
 	jp		RET2BAS				; return if error or done
 
+
+errorString:
+	.byte	"ERROR",$d,$0
 
 _buffer:
 _loadAddress	.equ _buffer

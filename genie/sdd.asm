@@ -27,7 +27,7 @@ start:
     call    sdSendCommand
 
 	call	str
-	.db		$0d, "L/D [PATH]? ", 0
+	.db		$0d, "L/D {PATH}? ", 0
 
     ; input filename string to _buffer. assume < 31 chars + terminator. [L/D][ ][PATH][\0]
     ld      hl,_buffer
@@ -35,7 +35,6 @@ start:
     call    INPSTR
 
 	; find first non-space character in string then send to einSDein
-    ld      hl,_buffer
 	rst		10h
 	ld		bc,$2000+IOP_WRITEDAT
 	otir
@@ -128,18 +127,23 @@ LOAD:
 
     ld      b,0
     ld      hl,(_loadAddress)
-    ld      a,(_loadLength)
+    ld      ix,_loadLength
     jr      wholeBlocksDoneTest
 
 loadWhole:
+	ld		a,CMD_FILE_READ_256
+	call	sdSendCommand
+	call	handleError
+
     inir
-    dec     a
+	dec		(ix+1)
 
 wholeBlocksDoneTest:
+	ld		a,(ix+1)
     and     a
     jr      nz,loadWhole
 
-    ld      a,(_loadLength+1)
+    ld      a,(ix)
     and     a
     jr      z,executeIt
 
