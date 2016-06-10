@@ -3,6 +3,7 @@
 
 *.bin
 *.cas
+*.html
 
 # User-specific files
 *.suo

@@ -1,5 +1,5 @@
-#include "[%INC%]/def-einsdein.inc"
-#include "[%INC%]/commandIDs.h"
+#include "[%INC%]einsdein.inc"
+#include "[%INC%]commandIDs.h"
 
 CHAROUT 	.equ $033a
 STRZOUT		.equ $28a7

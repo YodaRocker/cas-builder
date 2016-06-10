@@ -1,10 +1,10 @@
-set inname=sdd
-set outname=sdd.bin
+set inc=%~dp0..\..\geniestein\
+set root=%~dpn1
 
-set inc=%~dp0
+echo %root%
+echo.
+brass %1 -o "%root%.bin" -l "%root%.html"
 
-brass %INNAME%.asm -o %OUTNAME% -l %INNAME%.html
-
-casbuilder.exe %OUTNAME% /out=sdd.cas /load=7e80
+casbuilder.exe "%root%.bin" /out="%root%.cas" /load=7e80
 
 pause
