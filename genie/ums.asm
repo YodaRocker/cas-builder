@@ -7,17 +7,25 @@ RET2BAS		.equ $06cc
 WAITKEY		.equ $0049
 INPSTR      .equ $0361
 GOSYS		.equ $02b5
+RESET       .equ 0
 
-	.org	$3c40
+	.org	$41e2
 
+    jp      start
+    nop
+    nop
+
+start:
     ld      a,CMD_BUFFER_PTR_RESET
 	out		(IOP_WRITECMD),a
 
-    ; input filename string. assume < 32 chars, incl. terminator. [PATH][\0]
-    ld      hl,_buffer
-    call    INPSTR
+    ld      a,'>'
+    call    CHAROUT
 
-	; find first non-space character then upload to interface as filename
+    ; input filename string. assume < 32 chars, incl. terminator. [PATH][\0]
+    ld      hl,_ctlblock+6
+    ld      ($40a7),hl
+    call    INPSTR
 	rst		10h
 	ld		bc,$2000+IOP_WRITEDAT
 	otir
@@ -25,21 +33,18 @@ GOSYS		.equ $02b5
 	; opens .GNE file, leaves 3 words in xfer buffer: LOAD, LEN and EXEC
     ld      a,CMD_FILE_OPEN_READ
     call    sdSendCommand
-	jp		nz,GOSYS
 
-    ld      hl,_buffer
+    ld      hl,_ctlblock
     ld      bc,$0600+IOP_READ
     inir
 
-    ld      b,0							; 256 byte xfers
-    ld      hl,(_loadAddress)
     ld      ix,_loadLength
+    ld      hl,(_loadAddress)
     jr      wholeBlocksDoneTest
 
 loadWhole:
 	ld		a,CMD_FILE_READ_256
 	call	sdSendCommand
-	jp		nz,GOSYS
 
     inir
     dec     (ix+1)
@@ -58,12 +63,11 @@ wholeBlocksDoneTest:
 
 executeIt:
     ld      hl,(_execAddress)
-	push	hl
-	ret
+    jp      (hl)
 
+    nop
 
-	; -------------------------UTILS------------------------------
-
+; -------------------------UTILS------------------------------
 
 ; send a command in A, return with Z set = success, else error in A
 ;
@@ -77,11 +81,12 @@ _busy:
 
 	in		a,(IOP_READ)               ; read command status
 	and		a                          ; clear carry, set flags for immediate test on return
-	ret
+	jp      nz,RESET
+    ret
 
-_buffer:
-_loadAddress	.equ _buffer
-_loadLength		.equ _buffer+2
-_execAddress	.equ _buffer+4
-
+_ctlblock:
+_loadAddress	.equ _ctlblock
+_loadLength	    .equ _ctlblock+2
+_execAddress	.equ _ctlblock+4
+_inputbuf       .equ _ctlblock+6
 	.end

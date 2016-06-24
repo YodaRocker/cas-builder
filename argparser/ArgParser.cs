@@ -8,6 +8,15 @@ namespace argparser
 {
     public static class ArgParser
     {
+        public static bool SwitchPresent(IEnumerable<string> args, string argumentName)
+        {
+            var item =
+                args.FirstOrDefault(
+                    arg => arg.StartsWith("/" + argumentName, StringComparison.CurrentCultureIgnoreCase));
+
+            return item != null;
+        }
+
         public static bool CheckArg<T>(IEnumerable<string> args, string argumentName, ref T targetVariable)
         {
             var item = args.FirstOrDefault(arg => arg.StartsWith("/" + argumentName + "=", StringComparison.CurrentCultureIgnoreCase));
